@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FIFA World Cup 2026 — Dashboard</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <div class="brand">
+      <span class="brand-badge">⚽</span>
+      <div class="brand-text">
+        <strong>FIFA World Cup 2026</strong>
+        <span>USA · Canada · Mexico</span>
+      </div>
+    </div>
+
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+
+    <nav class="main-nav" id="mainNav">
+      <button class="nav-link active" data-target="home">Home</button>
+      <button class="nav-link" data-target="fixtures">Fixtures</button>
+      <button class="nav-link" data-target="results">Results</button>
+      <button class="nav-link" data-target="standings">Standings</button>
+      <button class="nav-link" data-target="bracket">Bracket</button>
+      <button class="nav-link" data-target="leaderboard">Leaderboard</button>
+      <button class="nav-link" data-target="players">Players</button>
+      <button class="nav-link" data-target="commentary">Commentary</button>
+      <button class="nav-link" data-target="news">News</button>
+    </nav>
+  </div>
+</header>
+
+<main id="mainContent">
+
+  <!-- HOME -->
+  <section class="view active" id="view-home">
+    <div class="hero">
+      <div class="hero-text">
+        <span class="pill">Semifinals · Jul 14–15, 2026</span>
+        <h1>Road to the Final</h1>
+        <p>Follow every match, standing, storyline and stat from the 2026 FIFA World Cup across the United States, Canada and Mexico.</p>
+        <div class="hero-actions">
+          <button class="btn btn-primary" data-target="fixtures">View Fixtures</button>
+          <button class="btn btn-ghost" data-target="bracket">See Bracket</button>
+        </div>
+      </div>
+      <div class="hero-stats">
+        <div class="stat-card"><strong>48</strong><span>Teams</span></div>
+        <div class="stat-card"><strong>104</strong><span>Matches</span></div>
+        <div class="stat-card"><strong>16</strong><span>Host Cities</span></div>
+        <div class="stat-card"><strong>3</strong><span>Host Nations</span></div>
+      </div>
+    </div>
+
+    <div class="home-grid">
+      <div class="panel" id="homeUpcoming">
+        <div class="panel-head"><h2>Upcoming Matches</h2><button class="link-btn" data-target="fixtures">See all →</button></div>
+        <div class="panel-body" id="homeUpcomingList"></div>
+      </div>
+      <div class="panel" id="homeResults">
+        <div class="panel-head"><h2>Latest Results</h2><button class="link-btn" data-target="results">See all →</button></div>
+        <div class="panel-body" id="homeResultsList"></div>
+      </div>
+      <div class="panel" id="homeScorers">
+        <div class="panel-head"><h2>Top Scorers</h2><button class="link-btn" data-target="leaderboard">See all →</button></div>
+        <div class="panel-body" id="homeScorersList"></div>
+      </div>
+      <div class="panel" id="homeNews">
+        <div class="panel-head"><h2>Latest News</h2><button class="link-btn" data-target="news">See all →</button></div>
+        <div class="panel-body" id="homeNewsList"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FIXTURES -->
+  <section class="view" id="view-fixtures">
+    <div class="view-head">
+      <h1>Fixtures</h1>
+      <p>Full match schedule across the group stage and knockout rounds.</p>
+    </div>
+    <div class="filter-bar" id="fixturesFilter"></div>
+    <div class="match-list" id="fixturesList"></div>
+  </section>
+
+  <!-- RESULTS -->
+  <section class="view" id="view-results">
+    <div class="view-head">
+      <h1>Results</h1>
+      <p>Final scores from every completed match so far.</p>
+    </div>
+    <div class="filter-bar" id="resultsFilter"></div>
+    <div class="match-list" id="resultsList"></div>
+  </section>
+
+  <!-- STANDINGS -->
+  <section class="view" id="view-standings">
+    <div class="view-head">
+      <h1>Group Standings</h1>
+      <p>Final group-stage tables — top 2 in each group advanced to the Round of 32.</p>
+    </div>
+    <div class="standings-grid" id="standingsGrid"></div>
+  </section>
+
+  <!-- BRACKET -->
+  <section class="view" id="view-bracket">
+    <div class="view-head">
+      <h1>Knockout Bracket</h1>
+      <p>The path to the final — Round of 16 through the championship match.</p>
+    </div>
+    <div class="bracket-wrap">
+      <div class="bracket" id="bracketContainer"></div>
+    </div>
+  </section>
+
+  <!-- LEADERBOARD -->
+  <section class="view" id="view-leaderboard">
+    <div class="view-head">
+      <h1>Leaderboards</h1>
+      <p>Golden Boot and Golden Ball races through the semifinals.</p>
+    </div>
+    <div class="leaderboard-grid">
+      <div class="panel">
+        <div class="panel-head"><h2>Top Scorers — Golden Boot</h2></div>
+        <div class="panel-body"><table class="data-table" id="scorersTable"></table></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2>Top Assists</h2></div>
+        <div class="panel-body"><table class="data-table" id="assistsTable"></table></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PLAYERS -->
+  <section class="view" id="view-players">
+    <div class="view-head">
+      <h1>Players</h1>
+      <p>Browse player profiles, stats and club affiliations.</p>
+    </div>
+    <div class="filter-bar" id="playersFilter">
+      <input type="search" id="playerSearch" placeholder="Search players or teams…" class="search-input">
+    </div>
+    <div class="players-grid" id="playersGrid"></div>
+  </section>
+
+  <!-- COMMENTARY -->
+  <section class="view" id="view-commentary">
+    <div class="view-head">
+      <h1>Live Commentary</h1>
+      <p id="commentaryMatchLabel"></p>
+    </div>
+    <div class="commentary-feed" id="commentaryFeed"></div>
+  </section>
+
+  <!-- NEWS -->
+  <section class="view" id="view-news">
+    <div class="view-head">
+      <h1>News</h1>
+      <p>The latest headlines, match reports and analysis.</p>
+    </div>
+    <div class="news-grid" id="newsGrid"></div>
+  </section>
+
+</main>
+
+<!-- Player profile modal -->
+<div class="modal-overlay" id="playerModalOverlay">
+  <div class="modal" id="playerModal"></div>
+</div>
+
+<footer class="site-footer">
+  <p>FIFA World Cup 2026™ Dashboard — Demo build with sample data. Not affiliated with FIFA.</p>
+</footer>
+
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
