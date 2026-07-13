@@ -97,14 +97,13 @@
   }
 
   /* ---------------- Fixtures & Results ---------------- */
-  const STAGES = [...new Set(MATCHES.map(m => m.stage))];
-
   function renderFilterableMatches(containerId, filterBarId, matches, storageKey) {
     const filterBar = document.getElementById(filterBarId);
     const list = document.getElementById(containerId);
     let active = "All";
+    const stages = [...new Set(matches.map(m => m.stage))];
 
-    filterBar.innerHTML = ["All", ...STAGES].map(s =>
+    filterBar.innerHTML = ["All", ...stages].map(s =>
       `<button class="filter-chip ${s === active ? "active" : ""}" data-stage="${s}">${s}</button>`
     ).join("");
 
