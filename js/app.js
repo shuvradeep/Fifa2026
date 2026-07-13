@@ -135,23 +135,29 @@
   }
 
   /* ---------------- Standings ---------------- */
+  const STATUS_ORDER = { winner: 0, "runner-up": 1, advanced: 2, third: 2, out: 3 };
+  const STATUS_CLASS = { winner: "status-win", "runner-up": "status-win", advanced: "status-adv", third: "status-adv", out: "status-out" };
+
   function renderStandings() {
     const grid = document.getElementById("standingsGrid");
-    grid.innerHTML = Object.keys(GROUPS).map(g => {
-      const rows = standingsForGroup(g);
+    grid.innerHTML = Object.entries(GROUPS).map(([g, teams]) => {
+      const rows = teams.slice().sort((a, b) => STATUS_ORDER[TEAM_STATUS[a].status] - STATUS_ORDER[TEAM_STATUS[b].status]);
       return `
         <div class="standings-card">
           <h3>Group ${g}</h3>
           <table class="data-table">
-            <thead><tr><th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GD</th><th>Pts</th></tr></thead>
+            <thead><tr><th>Team</th><th>Record</th><th>Pts</th><th>Result</th></tr></thead>
             <tbody>
-              ${rows.map(t => `
+              ${rows.map(name => {
+                const s = TEAM_STATUS[name];
+                return `
                 <tr>
-                  <td>${flag(t.name)} ${t.name}</td>
-                  <td>${t.played}</td><td>${t.won}</td><td>${t.drawn}</td><td>${t.lost}</td>
-                  <td>${t.gd > 0 ? "+" : ""}${t.gd}</td><td><b>${t.pts}</b></td>
-                </tr>
-              `).join("")}
+                  <td>${flag(name)} ${name}</td>
+                  <td>${s.record || "—"}</td>
+                  <td>${s.pts != null ? `<b>${s.pts}</b>` : "—"}</td>
+                  <td><span class="match-status ${STATUS_CLASS[s.status]}">${STATUS_LABEL[s.status]}</span></td>
+                </tr>`;
+              }).join("")}
             </tbody>
           </table>
         </div>
@@ -194,12 +200,14 @@
   }
 
   /* ---------------- Leaderboard ---------------- */
+  const dash = (v) => (v == null ? "—" : v);
+
   function renderLeaderboard() {
     document.getElementById("scorersTable").innerHTML = `
       <thead><tr><th>#</th><th>Player</th><th>Team</th><th>Apps</th><th>Goals</th></tr></thead>
       <tbody>
         ${TOP_SCORERS.map((p, i) => `
-          <tr><td>${i + 1}</td><td>${p.name}</td><td>${flag(p.team)} ${p.team}</td><td>${p.apps}</td><td><b>${p.goals}</b></td></tr>
+          <tr><td>${i + 1}</td><td>${p.name}</td><td>${flag(p.team)} ${p.team}</td><td>${dash(p.apps)}</td><td><b>${dash(p.goals)}</b></td></tr>
         `).join("")}
       </tbody>
     `;
@@ -207,7 +215,7 @@
       <thead><tr><th>#</th><th>Player</th><th>Team</th><th>Apps</th><th>Assists</th></tr></thead>
       <tbody>
         ${TOP_ASSISTS.map((p, i) => `
-          <tr><td>${i + 1}</td><td>${p.name}</td><td>${flag(p.team)} ${p.team}</td><td>${p.apps}</td><td><b>${p.assists}</b></td></tr>
+          <tr><td>${i + 1}</td><td>${p.name}</td><td>${flag(p.team)} ${p.team}</td><td>${dash(p.apps)}</td><td><b>${dash(p.assists)}</b></td></tr>
         `).join("")}
       </tbody>
     `;
@@ -223,14 +231,13 @@
       <div class="player-card" data-id="${p.id}">
         <div class="p-top">
           <div class="player-avatar">${initials(p.name)}</div>
-          <div class="player-number">${p.number}</div>
         </div>
         <h3>${p.name}</h3>
         <div class="p-meta">${flag(p.team)} ${p.team} · ${p.pos}</div>
         <div class="player-stats-row">
-          <span><b>${p.goals}</b> G</span>
-          <span><b>${p.assists}</b> A</span>
-          <span><b>${p.apps}</b> Apps</span>
+          <span><b>${dash(p.goals)}</b> G</span>
+          <span><b>${dash(p.assists)}</b> A</span>
+          <span><b>${dash(p.apps)}</b> Apps</span>
         </div>
       </div>
     `;
@@ -259,16 +266,15 @@
         <div class="player-avatar" style="width:64px;height:64px;font-size:1.3rem">${initials(p.name)}</div>
         <div>
           <h2 style="margin-bottom:.2rem">${p.name}</h2>
-          <div class="p-meta">${flag(p.team)} ${p.team} · #${p.number} · ${p.pos}</div>
+          <div class="p-meta">${flag(p.team)} ${p.team} · ${p.pos}</div>
         </div>
       </div>
       <p style="color:var(--text-dim);font-size:.9rem;line-height:1.5">${p.bio}</p>
       <div class="player-stats-row" style="margin-top:1rem;font-size:.85rem;gap:1.5rem">
         <span><b>${p.club}</b><br><span style="color:var(--text-faint)">Club</span></span>
-        <span><b>${p.age}</b><br><span style="color:var(--text-faint)">Age</span></span>
-        <span><b>${p.goals}</b><br><span style="color:var(--text-faint)">Goals</span></span>
-        <span><b>${p.assists}</b><br><span style="color:var(--text-faint)">Assists</span></span>
-        <span><b>${p.apps}</b><br><span style="color:var(--text-faint)">Apps</span></span>
+        <span><b>${dash(p.goals)}</b><br><span style="color:var(--text-faint)">Goals</span></span>
+        <span><b>${dash(p.assists)}</b><br><span style="color:var(--text-faint)">Assists</span></span>
+        <span><b>${dash(p.apps)}</b><br><span style="color:var(--text-faint)">Apps</span></span>
       </div>
     `;
     document.getElementById("playerModalOverlay").classList.add("open");
@@ -286,14 +292,24 @@
   document.getElementById("playerSearch").addEventListener("input", (e) => renderPlayers(e.target.value));
 
   /* ---------------- Commentary ---------------- */
-  function renderCommentary() {
-    document.getElementById("commentaryMatchLabel").textContent = COMMENTARY.matchLabel;
-    document.getElementById("commentaryFeed").innerHTML = COMMENTARY.feed.map(c => `
+  function feedHtml(items) {
+    return items.map(c => `
       <div class="commentary-item">
         <div class="commentary-minute">${c.minute}</div>
         <div class="commentary-text">${c.text}</div>
       </div>
     `).join("");
+  }
+
+  function renderCommentary() {
+    document.getElementById("commentaryMatchLabel").textContent =
+      "Build-up notes compiled from published match previews ahead of the semifinals.";
+    document.getElementById("commentaryFeed").innerHTML = `
+      <h3 style="margin:0 0 .5rem;font-size:1rem;color:var(--text)">${COMMENTARY.matchLabel}</h3>
+      ${feedHtml(COMMENTARY.feed)}
+      <h3 style="margin:1.5rem 0 .5rem;font-size:1rem;color:var(--text)">${COMMENTARY.secondLabel}</h3>
+      ${feedHtml(COMMENTARY.secondFeed)}
+    `;
   }
 
   /* ---------------- News ---------------- */
@@ -303,9 +319,9 @@
         <div class="news-thumb" style="background:${n.image}"></div>
         <div class="news-body">
           <span class="news-tag">${n.tag}</span>
-          <h3>${n.title}</h3>
+          <h3><a href="${n.url}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none">${n.title}</a></h3>
           <p>${n.summary}</p>
-          <span class="news-date">${formatDate(n.date)}</span>
+          <span class="news-date">${formatDate(n.date)} · ${n.source}</span>
         </div>
       </div>
     `;

@@ -331,6 +331,9 @@ main {
 .status-FT { background: rgba(107,122,156,0.2); color: var(--text-dim); }
 .status-LIVE { background: rgba(239,68,68,0.18); color: var(--red); animation: pulse 1.6s infinite; }
 .status-UPCOMING { background: rgba(59,130,246,0.18); color: var(--blue); }
+.status-win { background: rgba(34,197,94,0.16); color: var(--accent); }
+.status-adv { background: rgba(59,130,246,0.18); color: var(--blue); }
+.status-out { background: rgba(239,68,68,0.12); color: var(--text-faint); }
 
 @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
 
@@ -382,7 +385,7 @@ main {
 /* ---------- Standings ---------- */
 .standings-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 1.1rem;
 }
 
