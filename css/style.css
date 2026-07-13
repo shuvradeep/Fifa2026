@@ -112,6 +112,43 @@ button { font-family: inherit; cursor: pointer; }
   background: var(--accent);
 }
 
+.refresh-widget {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.refresh-btn {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  color: var(--text);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 1.05rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.15s ease;
+}
+
+.refresh-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+.refresh-btn.spinning { animation: spin 0.8s linear infinite; }
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.refresh-status {
+  font-size: 0.72rem;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
 .nav-toggle {
   display: none;
   flex-direction: column;
@@ -480,6 +517,15 @@ table.data-table tbody tr:hover { background: var(--bg-elevated); }
 .bracket-match .b-team.winner { color: var(--accent); font-weight: 700; }
 .bracket-match .b-note { color: var(--text-faint); font-size: 0.68rem; margin-top: 0.2rem; }
 
+.bracket-match .b-live {
+  color: var(--red);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  margin-bottom: 0.2rem;
+  animation: pulse 1.6s infinite;
+}
+
 /* ---------- Leaderboard ---------- */
 .leaderboard-grid {
   display: grid;
@@ -664,6 +710,7 @@ table.data-table tbody tr:hover { background: var(--bg-elevated); }
 }
 
 @media (max-width: 760px) {
+  .refresh-status { display: none; }
   .nav-toggle { display: flex; }
   .main-nav {
     display: none;

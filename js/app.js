@@ -67,7 +67,9 @@
 
   /* ---------------- Home ---------------- */
   function renderHome() {
-    const upcoming = MATCHES.filter(m => m.status === "UPCOMING").slice(0, 4);
+    const upcoming = MATCHES.filter(m => m.status === "UPCOMING" || m.status === "LIVE")
+      .sort((a, b) => (a.status === "LIVE" ? -1 : b.status === "LIVE" ? 1 : 0))
+      .slice(0, 4);
     const results = MATCHES.filter(m => m.status === "FT").slice(-4).reverse();
 
     document.getElementById("homeUpcomingList").innerHTML = upcoming.map(matchRow).join("") || "<p>No upcoming matches.</p>";
@@ -124,7 +126,7 @@
   }
 
   function renderFixtures() {
-    const upcoming = MATCHES.filter(m => m.status === "UPCOMING");
+    const upcoming = MATCHES.filter(m => m.status === "UPCOMING" || m.status === "LIVE");
     renderFilterableMatches("fixturesList", "fixturesFilter", upcoming);
   }
 
@@ -165,19 +167,18 @@
   }
 
   /* ---------------- Bracket ---------------- */
-  function bracketMatchHtml(m) {
-    if (m.hs == null) {
-      return `
-        <div class="bracket-match">
-          <div class="b-team"><span>${flag(m.home)} ${m.home}</span><span>-</span></div>
-          <div class="b-team"><span>${flag(m.away)} ${m.away}</span><span>-</span></div>
-        </div>`;
-    }
-    const homeWin = m.hs > m.as || (m.note && m.note.includes(m.home));
+  function bracketMatchHtml(id) {
+    const m = MATCHES.find(x => x.id === id);
+    if (!m) return "";
+    const hasScore = m.hs != null;
+    const decided = m.status === "FT";
+    const homeWin = decided && (m.hs > m.as || (m.hs === m.as && m.hp > m.ap));
+    const awayWin = decided && (m.as > m.hs || (m.hs === m.as && m.ap > m.hp));
     return `
       <div class="bracket-match">
-        <div class="b-team ${homeWin ? "winner" : ""}"><span>${flag(m.home)} ${m.home}</span><span>${m.hs}</span></div>
-        <div class="b-team ${!homeWin ? "winner" : ""}"><span>${flag(m.away)} ${m.away}</span><span>${m.as}</span></div>
+        ${m.status === "LIVE" ? '<div class="b-live">● LIVE</div>' : ""}
+        <div class="b-team ${homeWin ? "winner" : ""}"><span>${flag(m.home)} ${m.home}</span><span>${hasScore ? m.hs : "-"}</span></div>
+        <div class="b-team ${awayWin ? "winner" : ""}"><span>${flag(m.away)} ${m.away}</span><span>${hasScore ? m.as : "-"}</span></div>
         ${m.note ? `<div class="b-note">${m.note}</div>` : ""}
       </div>`;
   }
@@ -333,6 +334,76 @@
       .map(newsCardHtml).join("");
   }
 
+  /* ---------------- Live Updates ---------------- */
+  // Polls data/live.json, which gets edited/pushed whenever a real score
+  // changes. Auto-polls every 60s only while a scheduled match is likely
+  // in progress; the refresh button always fetches on demand.
+  const LIVE_JSON_URL = "data/live.json";
+  const LIVE_WINDOW_MS = 150 * 60 * 1000; // covers full match + extra time + penalties
+
+  function matchStartUTC(m) {
+    const t = /(\d{2}):(\d{2})/.exec(m.time || "");
+    if (!m.date || !t) return null;
+    // Remaining fixtures are all US Eastern Daylight Time (UTC-4) kickoffs.
+    return new Date(`${m.date}T${t[1]}:${t[2]}:00-04:00`);
+  }
+
+  function isAnyMatchLive() {
+    const now = Date.now();
+    return MATCHES.some(m => {
+      if (m.status === "LIVE") return true;
+      const start = matchStartUTC(m);
+      return start && now >= start.getTime() && now <= start.getTime() + LIVE_WINDOW_MS;
+    });
+  }
+
+  function rerenderMatchViews() {
+    renderHome();
+    renderFixtures();
+    renderResults();
+    renderBracket();
+  }
+
+  function setRefreshStatus(text) {
+    const el = document.getElementById("refreshStatus");
+    if (el) el.textContent = text;
+  }
+
+  async function fetchLiveUpdates(manual) {
+    const btn = document.getElementById("refreshBtn");
+    if (btn) btn.classList.add("spinning");
+    if (manual) setRefreshStatus("Checking…");
+    try {
+      const res = await fetch(`${LIVE_JSON_URL}?t=${Date.now()}`, { cache: "no-store" });
+      if (!res.ok) throw new Error("no live data");
+      const data = await res.json();
+      let changed = false;
+      (data.matches || []).forEach(update => {
+        const m = MATCHES.find(x => x.id === update.id);
+        if (!m) return;
+        ["status", "hs", "as", "hp", "ap", "note", "home", "away"].forEach(key => {
+          if (update[key] !== undefined && JSON.stringify(update[key]) !== JSON.stringify(m[key])) {
+            m[key] = update[key];
+            changed = true;
+          }
+        });
+      });
+      if (changed) rerenderMatchViews();
+      const stamp = new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+      setRefreshStatus(`Updated ${stamp}`);
+    } catch (e) {
+      setRefreshStatus("Refresh failed — showing last known scores");
+    } finally {
+      if (btn) btn.classList.remove("spinning");
+    }
+  }
+
+  document.getElementById("refreshBtn").addEventListener("click", () => fetchLiveUpdates(true));
+
+  setInterval(() => {
+    if (isAnyMatchLive()) fetchLiveUpdates(false);
+  }, 60 * 1000);
+
   /* ---------------- Init ---------------- */
   renderHome();
   renderFixtures();
@@ -343,4 +414,5 @@
   renderPlayers("");
   renderCommentary();
   renderNews();
+  fetchLiveUpdates(false);
 })();

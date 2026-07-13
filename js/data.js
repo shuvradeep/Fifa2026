@@ -171,30 +171,14 @@ const MATCHES = [
 ];
 
 /* ---------------- Knockout Bracket ---------------- */
+// Each round just lists match ids — the bracket view always reads the
+// live home/away/score/status/note straight from MATCHES, so a live
+// score update to MATCHES shows up in the bracket automatically.
 const BRACKET = {
-  r16: [
-    { home: "France", away: "Paraguay", hs: 1, as: 0 },
-    { home: "Morocco", away: "Canada", hs: 3, as: 0 },
-    { home: "Mexico", away: "England", hs: 2, as: 3 },
-    { home: "Brazil", away: "Norway", hs: 1, as: 2, note: "Haaland brace" },
-    { home: "Portugal", away: "Spain", hs: 0, as: 1, note: "Merino, added time" },
-    { home: "USA", away: "Belgium", hs: 1, as: 4 },
-    { home: "Switzerland", away: "Colombia", hs: 0, as: 0, note: "Switzerland win 4-3 on penalties" },
-    { home: "Argentina", away: "Egypt", hs: 3, as: 2 },
-  ],
-  qf: [
-    { home: "France", away: "Morocco", hs: 2, as: 0 },
-    { home: "Spain", away: "Belgium", hs: 2, as: 1 },
-    { home: "England", away: "Norway", hs: 2, as: 1, note: "After extra time — Bellingham brace" },
-    { home: "Argentina", away: "Switzerland", hs: 3, as: 1, note: "After extra time" },
-  ],
-  sf: [
-    { home: "France", away: "Spain", hs: null, as: null },
-    { home: "Argentina", away: "England", hs: null, as: null },
-  ],
-  final: [
-    { home: "TBD", away: "TBD", hs: null, as: null }
-  ]
+  r16: [31, 32, 33, 34, 35, 36, 37, 38],
+  qf: [41, 42, 43, 44],
+  sf: [51, 52],
+  final: [62],
 };
 
 /* ---------------- Leaderboards ---------------- */

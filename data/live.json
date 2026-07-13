@@ -1,0 +1,10 @@
+{
+  "updatedAt": "2026-07-13T21:00:00Z",
+  "note": "Live/updated scores get written here and picked up by the page automatically. Mirrors js/data.js for these match ids until a real update lands.",
+  "matches": [
+    { "id": 51, "status": "UPCOMING", "hs": null, "as": null, "hp": null, "ap": null, "note": "First time the top 4 FIFA-ranked teams have all reached the World Cup semifinals." },
+    { "id": 52, "status": "UPCOMING", "hs": null, "as": null, "hp": null, "ap": null, "note": "Argentina chase back-to-back titles; England chase a first since 1966." },
+    { "id": 61, "status": "UPCOMING", "hs": null, "as": null, "hp": null, "ap": null },
+    { "id": 62, "status": "UPCOMING", "hs": null, "as": null, "hp": null, "ap": null, "note": "Halftime show curated by Chris Martin, featuring Madonna, Shakira and BTS." }
+  ]
+}
