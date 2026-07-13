@@ -335,10 +335,17 @@
   }
 
   /* ---------------- Live Updates ---------------- */
-  // Polls data/live.json, which gets edited/pushed whenever a real score
-  // changes. Auto-polls every 60s only while a scheduled match is likely
-  // in progress; the refresh button always fetches on demand.
-  const LIVE_JSON_URL = "data/live.json";
+  // Talks directly to ESPN's public (unofficial, keyless, CORS-open)
+  // scoreboard feed from the browser — no backend involved. This is the
+  // JSON endpoint espn.com's own scoreboard page calls internally; it's
+  // undocumented and could change shape without notice, so every access
+  // below is defensive (optional chaining + try/catch) and a failure just
+  // leaves the last known scores on screen instead of breaking the page.
+  const ESPN_SCOREBOARD_URL = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard";
+
+  // The only matches left with any real uncertainty. Group stage through
+  // the quarterfinals are historical fact and never change.
+  const TRACKED_MATCH_IDS = [51, 52, 61, 62];
   const LIVE_WINDOW_MS = 150 * 60 * 1000; // covers full match + extra time + penalties
 
   function matchStartUTC(m) {
@@ -348,9 +355,13 @@
     return new Date(`${m.date}T${t[1]}:${t[2]}:00-04:00`);
   }
 
+  function trackedMatches() {
+    return MATCHES.filter(m => TRACKED_MATCH_IDS.includes(m.id) && m.status !== "FT");
+  }
+
   function isAnyMatchLive() {
     const now = Date.now();
-    return MATCHES.some(m => {
+    return trackedMatches().some(m => {
       if (m.status === "LIVE") return true;
       const start = matchStartUTC(m);
       return start && now >= start.getTime() && now <= start.getTime() + LIVE_WINDOW_MS;
@@ -369,29 +380,77 @@
     if (el) el.textContent = text;
   }
 
+  function mapEspnState(state) {
+    if (state === "post") return "FT";
+    if (state === "in") return "LIVE";
+    return "UPCOMING";
+  }
+
+  // Merges one ESPN "event" (a single match) into our local match object.
+  // Returns true if anything actually changed, so callers know whether a
+  // re-render is needed.
+  function applyEspnEvent(m, event) {
+    const comp = event?.competitions?.[0];
+    const competitors = comp?.competitors;
+    const home = competitors?.find(c => c.homeAway === "home");
+    const away = competitors?.find(c => c.homeAway === "away");
+    const state = comp?.status?.type?.state;
+    if (!comp || !home || !away || !state) return false;
+
+    let changed = false;
+    const set = (key, value) => {
+      if (value !== undefined && value !== null && JSON.stringify(m[key]) !== JSON.stringify(value)) {
+        m[key] = value;
+        changed = true;
+      }
+    };
+
+    set("status", mapEspnState(state));
+    if (home.team?.displayName) set("home", home.team.displayName);
+    if (away.team?.displayName) set("away", away.team.displayName);
+    if (home.score != null) set("hs", Number(home.score));
+    if (away.score != null) set("as", Number(away.score));
+    if (home.shootoutScore != null) set("hp", Number(home.shootoutScore));
+    if (away.shootoutScore != null) set("ap", Number(away.shootoutScore));
+    const detail = comp.status?.type?.shortDetail;
+    if (state !== "pre" && detail) set("note", detail);
+
+    return changed;
+  }
+
+  async function fetchOneDate(dateStr) {
+    const espnDate = dateStr.replace(/-/g, "");
+    const res = await fetch(`${ESPN_SCOREBOARD_URL}?dates=${espnDate}`, { cache: "no-store" });
+    if (!res.ok) throw new Error(`ESPN scoreboard returned ${res.status}`);
+    const data = await res.json();
+    return data?.events || [];
+  }
+
   async function fetchLiveUpdates(manual) {
+    const toCheck = trackedMatches();
+    if (!toCheck.length) {
+      setRefreshStatus("Tournament complete");
+      return;
+    }
     const btn = document.getElementById("refreshBtn");
     if (btn) btn.classList.add("spinning");
     if (manual) setRefreshStatus("Checking…");
     try {
-      const res = await fetch(`${LIVE_JSON_URL}?t=${Date.now()}`, { cache: "no-store" });
-      if (!res.ok) throw new Error("no live data");
-      const data = await res.json();
+      const dates = [...new Set(toCheck.map(m => m.date))];
+      const eventsByDate = await Promise.all(dates.map(fetchOneDate));
       let changed = false;
-      (data.matches || []).forEach(update => {
-        const m = MATCHES.find(x => x.id === update.id);
-        if (!m) return;
-        ["status", "hs", "as", "hp", "ap", "note", "home", "away"].forEach(key => {
-          if (update[key] !== undefined && JSON.stringify(update[key]) !== JSON.stringify(m[key])) {
-            m[key] = update[key];
-            changed = true;
-          }
-        });
+      toCheck.forEach(m => {
+        const dateIdx = dates.indexOf(m.date);
+        // Exactly one World Cup match is scheduled per date at this stage,
+        // so the single event returned for that date is this match.
+        const event = eventsByDate[dateIdx]?.[0];
+        if (event && applyEspnEvent(m, event)) changed = true;
       });
       if (changed) rerenderMatchViews();
       const stamp = new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
       setRefreshStatus(`Updated ${stamp}`);
     } catch (e) {
+      console.warn("Live score refresh failed:", e);
       setRefreshStatus("Refresh failed — showing last known scores");
     } finally {
       if (btn) btn.classList.remove("spinning");
